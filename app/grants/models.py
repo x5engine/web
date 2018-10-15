@@ -56,6 +56,8 @@ class Grant(SuperModel):
         'dashboard.Profile', related_name='grant_admin', on_delete=models.CASCADE, null=True
     )
     team_members = models.ManyToManyField('dashboard.Profile', related_name='grant_teams')
+    creation_block = models.PositiveIntegerField(default=0)
+    last_block_synced = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         """Return the string representation of a Grant."""
