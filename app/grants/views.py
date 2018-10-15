@@ -21,8 +21,6 @@ import json
 import logging
 
 from django.conf import settings
-from django.core.paginator import Paginator
-from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -44,14 +42,7 @@ def get_keywords():
 
 def grants(request):
     """Handle grants explorer."""
-    limit = request.GET.get('limit', 25)
-    page = request.GET.get('page', 1)
-    sort = request.GET.get('sort', '-created_on')
-
-    _grants = Grant.objects.all().order_by(sort)
-
-    paginator = Paginator(_grants, limit)
-    grants = paginator.get_page(page)
+    grants = Grant.objects.all()
 
     params = {
         'active': 'dashboard',
@@ -132,7 +123,7 @@ def grant_details(request, grant_id):
         'title': _('Grant Details'),
         'grant': grant,
         'keywords': get_keywords(),
-        'is_admin': (grant.admin_profile.id == profile.id) if profile else False,
+        'is_admin': grant.admin_profile.id == profile.id,
         'activity': activity_data,
         'gh_activity': gh_data,
     }
@@ -156,6 +147,7 @@ def grant_new(request):
             'amount_goal': request.POST.get('amount_goal', 0),
             'transaction_hash': request.POST.get('transaction_hash', ''),
             'contract_address': request.POST.get('contract_address', ''),
+            'block_number': request.POST.get('block_number', ''),
             'network': request.POST.get('network', 'mainnet'),
             'admin_profile': profile,
             'logo': logo,
@@ -185,19 +177,19 @@ def grant_fund(request, grant_id):
     # make sure a user can only create one subscription per grant
     if request.method == 'POST':
         subscription = Subscription()
-        # subscriptionHash and ContributorSignature will be given from smartcontracts and web3
-        # subscription.subscriptionHash = request.POST.get('input_name')
-        # subscription.contributorSignature = request.POST.get('description')
-        # Address will come from web3 instance
-        # subscription.contributorAddress = request.POST.get('reference_url')
-        subscription.amount_per_period = request.POST.get('amount_per_period')
-        # subscription.tokenAddress = request.POST.get('denomination')
-        subscription.gas_price = request.POST.get('gas_price')
-        # network will come from web3 instance
-        # subscription.network = request.POST.get('amount_goal')
+
+        subscription.subscription_hash = request.POST.get('subscription_hash', '')
+        subscription.contributor_signature = request.POST.get('signature', '')
+        subscription.contributor_address = request.POST.get('contributor_address', '')
+        subscription.amount_per_period = request.POST.get('amount_per_period', 0)
+        subscription.token_address = request.POST.get('token_address', '')
+        subscription.gas_price = request.POST.get('gas_price', 0)
+        subscription.network = request.POST.get('network', '')
         subscription.contributor_profile = profile
         subscription.grant = grant
         subscription.save()
+        return redirect(reverse('grants:details', args=(grant.pk, )))
+
     else:
         subscription = {}
 
@@ -217,8 +209,9 @@ def subscription_cancel(request, subscription_id):
     grant = getattr(subscription, 'grant', None)
 
     if request.method == 'POST':
-        subscription.active = False
+        subscription.status = False
         subscription.save()
+        return redirect(reverse('grants:details', args=(grant.pk, )))
 
     params = {
         'title': _('Cancel Grant Subscription'),
@@ -232,16 +225,8 @@ def subscription_cancel(request, subscription_id):
 
 def profile(request):
     """Show grants profile of logged in user."""
-    limit = request.GET.get('limit', 25)
-    page = request.GET.get('page', 1)
-    sort = request.GET.get('sort', '-created_on')
-
-    profile = request.user.profile if request.user.is_authenticated else None
-    _grants = Grant.objects.prefetch_related('team_members', 'subscriptions').filter(
-        Q(admin_profile=profile) | Q(team_members__in=profile)).order_by(sort)
-
-    paginator = Paginator(_grants, limit)
-    grants = paginator.get_page(page)
+    # profile = request.user.profile if request.user.is_authenticated else None
+    grants = Grant.objects.all()  # TODO: show only logged in users grants
 
     history = [
         {
