@@ -21,6 +21,7 @@ import json
 import logging
 
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import Http404
@@ -29,7 +30,8 @@ from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from grants.models import Grant, Subscription
+from grants.forms import MilestoneForm
+from grants.models import Grant, Milestone, Subscription
 from marketing.models import Keyword
 from web3 import HTTPProvider, Web3
 
@@ -67,7 +69,8 @@ def grant_details(request, grant_id):
     profile = request.user.profile if request.user.is_authenticated else None
 
     try:
-        grant = Grant.objects.prefetch_related('subscriptions').get(pk=grant_id)
+        grant = Grant.objects.prefetch_related('subscriptions', 'milestones').get(pk=grant_id)
+        milestones = grant.milestones.order_by('due_date')
     except Grant.DoesNotExist:
         raise Http404
 
@@ -131,14 +134,16 @@ def grant_details(request, grant_id):
         'active': 'dashboard',
         'title': _('Grant Details'),
         'grant': grant,
-        'keywords': get_keywords(),
-        'is_admin': (grant.admin_profile.id == profile.id) if profile else False,
+        'is_admin': (grant.admin_profile.id == profile.id) if profile and grant.admin_profile else False,
         'activity': activity_data,
         'gh_activity': gh_data,
+        'milestones': milestones,
+        'keywords': get_keywords(),
     }
     return TemplateResponse(request, 'grants/detail.html', params)
 
 
+@login_required
 def grant_new(request):
     """Handle new grant."""
     profile = request.user.profile if request.user.is_authenticated else None
@@ -156,6 +161,7 @@ def grant_new(request):
             'amount_goal': request.POST.get('amount_goal', 0),
             'transaction_hash': request.POST.get('transaction_hash', ''),
             'contract_address': request.POST.get('contract_address', ''),
+            'block_number': request.POST.get('block_number', ''),
             'network': request.POST.get('network', 'mainnet'),
             'admin_profile': profile,
             'logo': logo,
@@ -174,6 +180,51 @@ def grant_new(request):
     return TemplateResponse(request, 'grants/new.html', params)
 
 
+@login_required
+def milestones(request, grant_id):
+    profile = request.user.profile if request.user.is_authenticated else None
+    grant = Grant.objects.get(pk=grant_id)
+
+    if profile != grant.admin_profile:
+        return redirect(reverse('grants:details', args=(grant.pk, )))
+
+    if request.method == "POST":
+        method = request.POST.get('method')
+
+        if method == "POST":
+            form = MilestoneForm(request.POST)
+            milestone = form.save(commit=False)
+            milestone.grant = grant
+            milestone.save()
+
+        if method == "PUT":
+            milestone_id = request.POST.get('milestone_id')
+            milestone = Milestone.objects.get(pk=milestone_id)
+            milestone.completion_date = request.POST.get('completion_date')
+            milestone.save()
+
+        if method == "DELETE":
+            milestone_id = request.POST.get('milestone_id')
+            milestone = Milestone.objects.get(pk=milestone_id)
+            milestone.delete()
+
+        return redirect(reverse('grants:milestones', args=(grant.pk, )))
+
+    form = MilestoneForm()
+    milestones = Milestone.objects.filter(grant_id=grant_id).order_by('due_date')
+
+    params = {
+        'active': 'grants',
+        'title': _('Grant Milestones'),
+        'grant': grant,
+        'milestones': milestones,
+        'form': form,
+        'keywords': get_keywords(),
+    }
+    return TemplateResponse(request, 'grants/milestones.html', params)
+
+
+@login_required
 def grant_fund(request, grant_id):
     """Handle grant funding."""
     try:
@@ -185,32 +236,30 @@ def grant_fund(request, grant_id):
     # make sure a user can only create one subscription per grant
     if request.method == 'POST':
         subscription = Subscription()
-        # subscriptionHash and ContributorSignature will be given from smartcontracts and web3
-        # subscription.subscriptionHash = request.POST.get('input_name')
-        # subscription.contributorSignature = request.POST.get('description')
-        # Address will come from web3 instance
-        # subscription.contributorAddress = request.POST.get('reference_url')
-        subscription.amount_per_period = request.POST.get('amount_per_period')
-        # subscription.tokenAddress = request.POST.get('denomination')
-        subscription.gas_price = request.POST.get('gas_price')
-        # network will come from web3 instance
-        # subscription.network = request.POST.get('amount_goal')
+
+        subscription.subscription_hash = request.POST.get('subscription_hash', '')
+        subscription.contributor_signature = request.POST.get('signature', '')
+        subscription.contributor_address = request.POST.get('contributor_address', '')
+        subscription.amount_per_period = request.POST.get('amount_per_period', 0)
+        subscription.token_address = request.POST.get('token_address', '')
+        subscription.gas_price = request.POST.get('gas_price', 0)
+        subscription.network = request.POST.get('network', '')
         subscription.contributor_profile = profile
         subscription.grant = grant
         subscription.save()
-    else:
-        subscription = {}
+        return redirect(reverse('grants:details', args=(grant.pk, )))
 
     params = {
         'active': 'dashboard',
         'title': _('Fund Grant'),
-        'subscription': subscription,
+        'subscription': {},
         'grant': grant,
         'keywords': get_keywords(),
     }
     return TemplateResponse(request, 'grants/fund.html', params)
 
 
+@login_required
 def subscription_cancel(request, subscription_id):
     """Handle the cancellation of a grant subscription."""
     subscription = Subscription.objects.select_related('grant').get(pk=subscription_id)
@@ -219,6 +268,7 @@ def subscription_cancel(request, subscription_id):
     if request.method == 'POST':
         subscription.active = False
         subscription.save()
+        return redirect(reverse('grants:details', args=(grant.pk, )))
 
     params = {
         'title': _('Cancel Grant Subscription'),
@@ -230,6 +280,7 @@ def subscription_cancel(request, subscription_id):
     return TemplateResponse(request, 'grants/cancel.html', params)
 
 
+@login_required
 def profile(request):
     """Show grants profile of logged in user."""
     limit = request.GET.get('limit', 25)
