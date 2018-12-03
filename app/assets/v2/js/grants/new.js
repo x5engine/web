@@ -17,6 +17,11 @@ $(document).ready(function() {
 
   $('#img-project').on('change', function() {
     if (this.files && this.files[0]) {
+
+      console.log(this.files);
+      console.log(this.files[0]);
+
+
       let reader = new FileReader();
 
       reader.onload = function(e) {
@@ -95,7 +100,9 @@ $(document).ready(function() {
                   $.each($(form).serializeArray(), function() {
                     data[this.name] = this.value;
                   });
-                  form.submit();
+
+                  console.log('data', data);
+                  // form.submit();
                 } else {
                   setTimeout(function() {
                     callFunctionWhenTransactionMined(transactionHash);

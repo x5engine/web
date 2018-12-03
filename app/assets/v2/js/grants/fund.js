@@ -111,7 +111,6 @@ $(document).ready(function() {
 
                   console.log('postData', postData);
 
-                  $('#real_period_seconds').val(realPeriodSeconds);
 
                   $.each($(form).serializeArray(), function() {
                     data[this.name] = this.value;
@@ -141,14 +140,14 @@ $(document).ready(function() {
             });
           }).on('confirmation', function(confirmationNumber, receipt) {
             console.log('receipt', receipt);
-            //
-            // $.each($(form).serializeArray(), function() {
-            //   data[this.name] = this.value;
-            // });
-            //
-            // data.frequency = realPeriodSeconds;
-            // console.log('data', data);
-            // form.submit();
+            $('#real_period_seconds').val(realPeriodSeconds);
+
+            $.each($(form).serializeArray(), function() {
+              data[this.name] = this.value;
+            });
+
+            console.log('data', data);
+            form.submit();
           });
 
         });
