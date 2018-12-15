@@ -20,7 +20,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.urls import re_path
 
-from .views import avatar, save_avatar
+from .views import activate_avatar, avatar, save_avatar, select_preset_avatar
 
 app_name = 'avatar'
-urlpatterns = [re_path(r'^view', avatar, name='view_avatar'), re_path(r'^save', save_avatar, name='save_avatar'), ]
+urlpatterns = [
+    re_path(r'^view', avatar, name='view_avatar'),
+    re_path(r'^save', save_avatar, name='save_avatar'),
+    re_path(r'^activate', activate_avatar, name='activate_avatar'),
+    re_path(r'^select-preset', select_preset_avatar, name='select_preset_avatar')
+    ]

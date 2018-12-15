@@ -175,7 +175,7 @@ class LeaderboardRankQuerySet(models.QuerySet):
 
     def active(self):
         """Filter results to only active LeaderboardRank objects."""
-        return self.select_related('profile', 'profile__avatar').filter(active=True)
+        return self.select_related('profile').filter(active=True)
 
 
 class LeaderboardRank(SuperModel):

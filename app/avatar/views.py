@@ -17,10 +17,10 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 """
+import json
 import logging
 from tempfile import NamedTemporaryFile
 
-from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -100,21 +100,50 @@ def save_avatar(request):
 
     payload = handle_avatar_payload(request)
     try:
-        if not profile.avatar:
-            profile.avatar = Avatar.objects.create(config=payload, use_github_avatar=False)
-            profile.save()
-        else:
-            profile.avatar.config = payload
-            profile.avatar.use_github_avatar = False
-            profile.avatar.save()
+        avatar = Avatar(config=payload, use_github_avatar=False, profile=profile)
+        avatar.use_github_avatar = False
         response['message'] = 'Avatar updated'
-        profile.avatar.create_from_config()
-        profile.avatar.save()
+        avatar.create_from_config()
+        avatar.save()
+        profile.activate_avatar(avatar.pk)
         create_user_action(profile.user, 'updated_avatar', request)
     except Exception as e:
         response['status'] = 400
         response['message'] = 'Bad Request'
         logger.error('Save Avatar - Error: (%s) - Handle: (%s)', e, profile.handle if profile else '')
+    return JsonResponse(response, status=response['status'])
+
+
+def activate_avatar(request):
+    """Activate the Avatar."""
+    response = {'status': 200, 'message': 'Avatar activated'}
+    if not request.user.is_authenticated or request.user.is_authenticated and not getattr(
+        request.user, 'profile', None
+    ):
+        return JsonResponse({'status': 405, 'message': 'Authentication required'}, status=405)
+    body = json.loads(request.body)
+    avatar_to_activate_pk = body['avatarPk']
+    profile = request.user.profile
+    profile.activate_avatar(avatar_to_activate_pk)
+    return JsonResponse(response, status=response['status'])
+
+
+def select_preset_avatar(request):
+    """Select preset Avatar."""
+    response = {'status': 200, 'message': 'Preset avatar selected'}
+    if not request.user.is_authenticated or request.user.is_authenticated and not getattr(
+        request.user, 'profile', None
+    ):
+        return JsonResponse({'status': 405, 'message': 'Authentication required'}, status=405)
+    body = json.loads(request.body)
+    profile = request.user.profile
+    preset_activate_pk = body['avatarPk']
+    preset_avatar = Avatar.objects.get(pk=preset_activate_pk)
+    preset_avatar.pk = None
+    preset_avatar.recommended_by_staff = False
+    preset_avatar.profile = profile
+    preset_avatar.save()
+    profile.activate_avatar(preset_avatar.pk)
     return JsonResponse(response, status=response['status'])
 
 

@@ -31,25 +31,15 @@ class GeneralAdmin(admin.ModelAdmin):
     list_display = ['created_on', '__str__']
 
 
-class ProfileInline(admin.TabularInline):
-    """Define the Profile related name inline class."""
-
-    model = Profile
-    max_num = 1
-    verbose_name = 'Profile'
-    verbose_name_plural = 'Profile'
-
-
 class AvatarAdmin(GeneralAdmin):
     """Define the Avatar administration layout."""
 
     ordering = ['-id']
     fields = [
         'config', 'use_github_avatar', 'svg_asset', 'custom_png_asset', 'github_svg_asset', 'png_asset', 'created_on',
-        'modified_on'
+        'modified_on', 'profile'
     ]
     readonly_fields = ['svg_asset', 'custom_png_asset', 'github_svg_asset', 'png_asset', 'created_on', 'modified_on']
-    inlines = [ProfileInline, ]
     search_fields = ['profile__handle']
 
     # Custom Avatars

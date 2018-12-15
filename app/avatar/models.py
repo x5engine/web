@@ -64,6 +64,10 @@ class Avatar(SuperModel):
     )
 
     use_github_avatar = models.BooleanField(default=True)
+    recommended_by_staff = models.BooleanField(default=False)
+    active = models.BooleanField(default=False)
+    profile = models.ForeignKey('dashboard.Profile', on_delete=models.CASCADE, null=True, blank=True,
+                                related_name='avatars')
 
     # Change tracking attributes
     __previous_svg = None
@@ -76,7 +80,7 @@ class Avatar(SuperModel):
 
     def __str__(self):
         """Define the string representation of Avatar."""
-        return f"Avatar ({self.pk}) - Profile: {self.profile_set.last().handle if self.profile_set.exists() else 'N/A'}"
+        return f"Avatar ({self.pk}) - Profile: {self.profile.handle if self.profile else 'N/A'}"
 
     def save(self, *args, force_insert=False, force_update=False, **kwargs):
         """Override the save to perform change comparison against PNG and SVG fields."""
@@ -118,7 +122,7 @@ class Avatar(SuperModel):
 
         """
         from avatar.utils import get_github_avatar
-        handle = self.profile_set.last().handle
+        handle = self.profile.handle
         temp_avatar = get_github_avatar(handle)
         if not temp_avatar:
             return ''
@@ -203,7 +207,7 @@ class Avatar(SuperModel):
             pass
 
         try:
-            handle = self.profile_set.last().handle
+            handle = self.profile.handle
         except Exception:
             handle = 'Self'
 
@@ -238,8 +242,8 @@ class Avatar(SuperModel):
             avatar = Figure(*components)
             avatar.save(tmp.name)
             with open(tmp.name) as file:
-                if self.profile_set.exists():
-                    profile = self.profile_set.last()
+                if self.profile:
+                    profile = self.profile
 
                 svg_name = profile.handle if profile and profile.handle else token_hex(8)
                 self.svg.save(f"{svg_name}.svg", File(file), save=True)
@@ -252,8 +256,8 @@ class Avatar(SuperModel):
                 tmpfile_io = convert_wand(source, input_fmt=input_fmt, output_fmt=output_fmt)
             else:
                 tmpfile_io = convert_img(source, input_fmt=input_fmt, output_fmt=output_fmt)
-            if self.profile_set.exists():
-                png_name = self.profile_set.last().handle
+            if self.profile:
+                png_name = self.profile.handle
             else:
                 png_name = token_hex(8)
 
