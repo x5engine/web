@@ -37,10 +37,11 @@ class AvatarAdmin(GeneralAdmin):
     ordering = ['-id']
     fields = [
         'config', 'use_github_avatar', 'svg_asset', 'custom_png_asset', 'github_svg_asset', 'png_asset', 'created_on',
-        'modified_on', 'profile'
+        'modified_on', 'profile', 'recommended_by_staff', 'active',
     ]
     readonly_fields = ['svg_asset', 'custom_png_asset', 'github_svg_asset', 'png_asset', 'created_on', 'modified_on']
     search_fields = ['profile__handle']
+    raw_id_fields = ['profile']
 
     # Custom Avatars
     def svg_asset(self, instance):
