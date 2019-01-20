@@ -84,7 +84,6 @@ def about(request):
         hidden=False,
     ).order_by('-popularity_week').cache()
     activities = Activity.objects.select_related('bounty').filter(
-        bounty__network='mainnet',
         activity_type='new_kudos',
     ).order_by('-created').cache()
 
@@ -96,6 +95,9 @@ def about(request):
         'card_title': _('Each Kudos is a unique work of art.'),
         'card_desc': _('It can be sent to highlight, recognize, and show appreciation.'),
         'avatar_url': static('v2/images/kudos/assets/kudos-image.png'),
+        'card_player_override': 'https://www.youtube.com/embed/EOlMTOzmKKk',
+        'card_player_stream_override': static('v2/card/kudos.mp4'),
+        'card_player_thumb_override': static('v2/card/kudos.png'),
         "listings": listings
     }
     return TemplateResponse(request, 'kudos_about.html', context)

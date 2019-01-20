@@ -1,13 +1,22 @@
 /* eslint-disable no-console */
 
 $(document).ready(function() {
+  if (web3 && web3.eth) {
+    web3.eth.net.isListening((error, connectionStatus) => {
+      if (connectionStatus)
+        init();
+    });
+  }
+});
 
+const init = () => {
   if (localStorage['grants_quickstart_disable'] !== 'true') {
     window.location = document.location.origin + '/grants/quickstart';
   }
 
   web3.eth.getAccounts(function(err, accounts) {
     $('#input-admin_address').val(accounts[0]);
+    $('#contract_owner_address').val(accounts[0]);
   });
 
 
@@ -17,6 +26,11 @@ $(document).ready(function() {
 
   $('#img-project').on('change', function() {
     if (this.files && this.files[0]) {
+      if (exceedFileSize(this.files[0])) {
+        _alert({ message: 'Grant Image should not exceed 4MB' }, 'error');
+        return;
+      }
+
       let reader = new FileReader();
 
       reader.onload = function(e) {
@@ -45,7 +59,9 @@ $(document).ready(function() {
         data[this.name] = this.value;
       });
 
+
       $('#token_symbol').val($('#js-token option:selected').text());
+      $('#token_address').val($('#js-token option:selected').val());
 
       if (document.web3network) {
         $('#network').val(document.web3network);
@@ -70,8 +86,6 @@ $(document).ready(function() {
         web3.utils.toTwosComplement(0)
       ];
 
-      console.log('args', args);
-
       web3.eth.getAccounts(function(err, accounts) {
         web3.eth.net.getId(function(err, network) {
           SubscriptionContract.deploy({
@@ -80,29 +94,71 @@ $(document).ready(function() {
           }).send({
             from: accounts[0],
             gas: 3000000,
-            gasPrice: 4000000000
+            gasPrice: web3.utils.toHex($('#gasPrice').val() * Math.pow(10, 9))
           }).on('error', function(error) {
             console.log('1', error);
-            alert('Your contract failed to deploy. Please try again.');
           }).on('transactionHash', function(transactionHash) {
             console.log('2', transactionHash);
             $('#transaction_hash').val(transactionHash);
-            document.issueURL = $('#input-url').val();
             const linkURL = etherscan_tx_url(transactionHash);
 
+            let data = {
+              'title': $('#input_title').val(),
+              'description': $('#input-description').val(),
+              'reference_url': $('#input-url').val(),
+              'admin_address': $('#input-admin_address').val(),
+              'contract_owner_address': $('#contract_owner_address').val(),
+              'token_address': $('#token_address').val(),
+              'token_symbol': $('#token_symbol').val(),
+              'amount_goal': $('#amount_goal').val(),
+              'contract_version': $('#contract_version').val(),
+              'transaction_hash': $('#transaction_hash').val(),
+              'network': $('#network').val(),
+              'team_members': $('#input-team_members').val(),
+              'csrfmiddlewaretoken': $("#create-grant input[name='csrfmiddlewaretoken']").val()
+            };
+
+            $.ajax({
+              type: 'post',
+              url: '',
+              data: data,
+              success: json => {
+                console.log('successfully saved grant');
+              },
+              error: () => {
+                _alert({ message: gettext('Your grant failed to save. Please try again.') }, 'error');
+              }
+            });
+
+            document.issueURL = linkURL;
             $('#transaction_url').attr('href', linkURL);
             enableWaitState('#new-grant');
 
             var callFunctionWhenTransactionMined = function(transactionHash) {
               web3.eth.getTransactionReceipt(transactionHash, function(error, result) {
                 if (result) {
-                  $('#contract_address').val(result.contractAddress);
-                  $.each($(form).serializeArray(), function() {
-                    data[this.name] = this.value;
+
+                  let data = {
+                    'contract_address': result.contractAddress,
+                    'csrfmiddlewaretoken': $("#create-grant input[name='csrfmiddlewaretoken']").val(),
+                    'transaction_hash': $('#transaction_hash').val()
+                  };
+
+                  $.ajax({
+                    type: 'post',
+                    url: '',
+                    data: data,
+                    success: json => {
+                      document.suppress_loading_leave_code = true;
+                      window.location = json.url;
+                    },
+                    error: () => {
+                      _alert({ message: gettext('Your grant failed to save. Please try again.') }, 'error');
+                    }
                   });
-                  form.submit();
+
                 } else {
-                  setTimeout(function() {
+                  setTimeout(() => {
                     callFunctionWhenTransactionMined(transactionHash);
                   }, 1000);
                 }
@@ -145,4 +201,10 @@ $(document).ready(function() {
   });
 
   $('.select2-selection__rendered').removeAttr('title');
-});
+};
+
+const exceedFileSize = (file, size = 4000000) => {
+  if (file.size > size)
+    return true;
+  return false;
+};
