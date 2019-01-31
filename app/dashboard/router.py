@@ -66,9 +66,6 @@ class ActivitySerializer(serializers.ModelSerializer):
 class BountySerializer(serializers.HyperlinkedModelSerializer):
     """Handle serializing the Bounty object."""
 
-    fulfillments = BountyFulfillmentSerializer(many=True)
-    interested = InterestSerializer(many=True)
-    activities = ActivitySerializer(many=True)
     bounty_owner_email = serializers.SerializerMethodField('override_bounty_owner_email')
     bounty_owner_name = serializers.SerializerMethodField('override_bounty_owner_name')
 
@@ -90,7 +87,7 @@ class BountySerializer(serializers.HyperlinkedModelSerializer):
             'url', 'created_on', 'modified_on', 'title', 'web3_created', 'value_in_token', 'token_name',
             'token_address', 'bounty_type', 'project_length', 'experience_level', 'github_url', 'github_comments',
             'bounty_owner_address', 'bounty_owner_email', 'bounty_owner_github_username', 'bounty_owner_name',
-            'fulfillments', 'interested', 'is_open', 'expires_date', 'activities', 'keywords', 'current_bounty',
+            'is_open', 'expires_date', 'keywords', 'current_bounty',
             'value_in_eth', 'token_value_in_usdt', 'value_in_usdt_now', 'value_in_usdt', 'status', 'now', 'avatar_url',
             'value_true', 'issue_description', 'network', 'org_name', 'pk', 'issue_description_text',
             'standard_bounties_id', 'web3_type', 'can_submit_after_expiration_date', 'github_issue_number',
@@ -132,6 +129,8 @@ class BountyViewSet(viewsets.ModelViewSet):
             QuerySet: The Bounty queryset.
 
         """
+        import time
+        print(time.time())
         param_keys = self.request.query_params.keys()
         queryset = Bounty.objects.prefetch_related(
             'fulfillments', 'interested', 'interested__profile', 'activities')
@@ -286,6 +285,7 @@ class BountyViewSet(viewsets.ModelViewSet):
                     'ip_address': get_ip(self.request)
                 }
             )
+        print(time.time())
 
         return queryset
 

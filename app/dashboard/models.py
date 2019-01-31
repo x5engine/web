@@ -692,6 +692,7 @@ class Bounty(SuperModel):
 
     @property
     def get_fulfillment_accepted_on(self):
+        return;
         try:
             return self.fulfillments.filter(accepted=True).first().accepted_on
         except Exception:
@@ -889,6 +890,7 @@ class Bounty(SuperModel):
 
     @property
     def github_issue_state(self):
+        return
         current_github_state = self.github_issue_details.get('state') if self.github_issue_details else None
         if not current_github_state:
             try:
@@ -928,6 +930,7 @@ class Bounty(SuperModel):
 
     @property
     def paid(self):
+        return
         """Return list of users paid for this bounty."""
         if self.status != 'done':
             return []  # to save the db hits
@@ -943,6 +946,7 @@ class Bounty(SuperModel):
 
     @property
     def additional_funding_summary(self):
+        return
         """Return a dict describing the additional funding from crowdfunding that this object has"""
         ret = {}
         for tip in self.tips.filter(is_for_bounty_fulfiller=True).send_happy_path():
@@ -1200,6 +1204,7 @@ class SendCryptoAsset(SuperModel):
 
     @property
     def value_true(self):
+        return 
         return self.get_natural_value()
 
     @property
@@ -1222,6 +1227,7 @@ class SendCryptoAsset(SuperModel):
     # TODO: DRY
     @property
     def value_in_eth(self):
+        return
         if self.tokenName == 'ETH':
             return self.amount
         try:
@@ -1235,6 +1241,7 @@ class SendCryptoAsset(SuperModel):
 
     @property
     def value_in_usdt(self):
+        return
         return self.value_in_usdt_then
 
     @property
@@ -1243,6 +1250,7 @@ class SendCryptoAsset(SuperModel):
 
     @property
     def token_value_in_usdt_now(self):
+        return
         try:
             return round(convert_token_to_usdt(self.tokenName), 2)
         except ConversionRateNotFoundError:
