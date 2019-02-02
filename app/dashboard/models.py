@@ -593,7 +593,7 @@ class Bounty(SuperModel):
                             return 'started'
                     elif self.interested.filter(pending=False).exists():
                         return 'started'
-                    return 'open'
+                return 'open'
             return 'submitted'
         except Exception as e:
             logger.warning(e)
