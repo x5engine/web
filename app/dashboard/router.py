@@ -25,7 +25,6 @@ from django.db.models import Prefetch
 import django_filters.rest_framework
 from rest_framework import routers, serializers, viewsets
 from retail.helpers import get_ip
-from silk.profiling.profiler import silk_profile
 
 from .models import Activity, Bounty, BountyFulfillment, Interest, ProfileSerializer, SearchHistory
 
@@ -105,7 +104,6 @@ class BountySerializer(serializers.HyperlinkedModelSerializer):
             'admin_override_suspend_auto_approval', 'reserved_for_user_handle', 'is_featured'
         )
 
-    @silk_profile(name='BountySerializerModelCreation')
     def create(self, validated_data):
         """Handle creation of m2m relationships and other custom operations."""
         fulfillments_data = validated_data.pop('fulfillments')
@@ -129,7 +127,6 @@ class BountyViewSet(viewsets.ModelViewSet):
     serializer_class = BountySerializer
     filter_backends = (django_filters.rest_framework.DjangoFilterBackend,)
 
-    @silk_profile(name='BountyViewSet')
     def get_queryset(self):
         """Get the queryset for Bounty.
 
