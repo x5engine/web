@@ -134,13 +134,14 @@ class DashboardModelsTest(TestCase):
             expires_date=datetime(2222, 11, 30, tzinfo=pytz.UTC),
             raw_data={}
         )
-        bounty_stats = Bounty.objects.exclude_by_status()
+        bounty_set = Bounty.objects.filter(pk__gt=Bounty.objects.latest('pk').pk-4)
+        bounty_stats = bounty_set.exclude_by_status()
         assert len(bounty_stats) == 4
-        bounty_stats = Bounty.objects.exclude_by_status(['open'])
+        bounty_stats = bounty_set.exclude_by_status(['open'])
         assert len(bounty_stats) == 3
-        bounty_stats = Bounty.objects.exclude_by_status(['cancelled', 'done'])
+        bounty_stats = bounty_set.exclude_by_status(['cancelled', 'done'])
         assert len(bounty_stats) == 3
-        bounty_stats = Bounty.objects.exclude_by_status(['open', 'expired', 'cancelled'])
+        bounty_stats = bounty_set.exclude_by_status(['open', 'expired', 'cancelled'])
         assert not bounty_stats
 
     @staticmethod
