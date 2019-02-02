@@ -587,9 +587,13 @@ class Bounty(SuperModel):
             if self.pk and self.project_type in ['contest', 'cooperative']:
                 return 'open'
             if self.num_fulfillments == 0:
-                if self.pk and self.interested.filter(pending=False).exists():
-                    return 'started'
-                return 'open'
+                if self.pk:
+                    if hasattr(self, 'pending_interested'):
+                        if self.pending_interested:
+                            return 'started'
+                    elif self.interested.filter(pending=False).exists():
+                        return 'started'
+                    return 'open'
             return 'submitted'
         except Exception as e:
             logger.warning(e)

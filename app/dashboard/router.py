@@ -20,9 +20,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import time
 from datetime import datetime
 
+from django.db.models import Prefetch
+
 import django_filters.rest_framework
 from rest_framework import routers, serializers, viewsets
 from retail.helpers import get_ip
+from silk.profiling.profiler import silk_profile
 
 from .models import Activity, Bounty, BountyFulfillment, Interest, ProfileSerializer, SearchHistory
 
@@ -102,6 +105,7 @@ class BountySerializer(serializers.HyperlinkedModelSerializer):
             'admin_override_suspend_auto_approval', 'reserved_for_user_handle', 'is_featured'
         )
 
+    @silk_profile(name='BountySerializerModelCreation')
     def create(self, validated_data):
         """Handle creation of m2m relationships and other custom operations."""
         fulfillments_data = validated_data.pop('fulfillments')
@@ -121,11 +125,11 @@ class BountySerializer(serializers.HyperlinkedModelSerializer):
 
 class BountyViewSet(viewsets.ModelViewSet):
     """Handle the Bounty view behavior."""
-    queryset = Bounty.objects.prefetch_related('fulfillments', 'interested', 'interested__profile', 'activities') \
-        .all().order_by('-web3_created')
+    queryset = Bounty.objects.all().order_by('-web3_created')
     serializer_class = BountySerializer
     filter_backends = (django_filters.rest_framework.DjangoFilterBackend,)
 
+    @silk_profile(name='BountyViewSet')
     def get_queryset(self):
         """Get the queryset for Bounty.
 
@@ -134,8 +138,7 @@ class BountyViewSet(viewsets.ModelViewSet):
 
         """
         param_keys = self.request.query_params.keys()
-        queryset = Bounty.objects.prefetch_related(
-            'fulfillments', 'interested', 'interested__profile', 'activities')
+        queryset = Bounty.objects
         if 'not_current' not in param_keys:
             queryset = queryset.current()
 
@@ -290,6 +293,11 @@ class BountyViewSet(viewsets.ModelViewSet):
                 )
 
 
+
+        queryset = queryset.prefetch_related(
+            'fulfillments', 'interested', 'interested__profile',
+             Prefetch('interested', queryset=Interest.objects.filter(pending=False), to_attr='pending_interested'),
+             'activities')
         return queryset
 
 
