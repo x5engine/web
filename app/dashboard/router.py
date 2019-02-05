@@ -23,11 +23,11 @@ from datetime import datetime
 from django.db.models import Prefetch
 
 import django_filters.rest_framework
+from avatar.models import BaseAvatar
 from rest_framework import routers, serializers, viewsets
 from retail.helpers import get_ip
 
-from avatar.models import BaseAvatar
-from .models import Activity, Bounty, BountyFulfillment, Interest, ProfileSerializer, SearchHistory, Profile
+from .models import Activity, Bounty, BountyFulfillment, Interest, Profile, ProfileSerializer, SearchHistory
 
 
 class BountyFulfillmentSerializer(serializers.ModelSerializer):
