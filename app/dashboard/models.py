@@ -111,6 +111,8 @@ class BountyQuerySet(models.QuerySet):
 
     def needs_review(self):
         """Filter results by bounties that need reviewed."""
+        if hasattr(self, 'activities_needs_review'):
+            return self.activities_needs_review_or_escalated
         return self.prefetch_related('activities') \
             .filter(
                 activities__activity_type__in=['bounty_abandonment_escalation_to_mods', 'bounty_abandonment_warning'],
@@ -588,8 +590,8 @@ class Bounty(SuperModel):
                 return 'open'
             if self.num_fulfillments == 0:
                 if self.pk:
-                    if hasattr(self, 'pending_interested'):
-                        if self.pending_interested:
+                    if hasattr(self, 'interested_not_pending'):
+                        if len(self.interested_not_pending):
                             return 'started'
                     elif self.interested.filter(pending=False).exists():
                         return 'started'
@@ -887,6 +889,8 @@ class Bounty(SuperModel):
 
     @property
     def needs_review(self):
+        if hasattr(self, 'activities_needs_review'):
+            return self.activities_needs_review
         if self.activities.filter(needs_review=True).exists():
             return True
         return False
@@ -2082,6 +2086,9 @@ class Profile(SuperModel):
 
     @property
     def active_avatar(self):
+        if hasattr(self, 'activities_avatars'):
+            print('found cache')
+            return self.activities_avatars[:1]
         return self.avatar_baseavatar_related.filter(active=True).first()
 
     @property
