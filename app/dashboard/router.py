@@ -27,7 +27,7 @@ from avatar.models import BaseAvatar
 from rest_framework import routers, serializers, viewsets
 from retail.helpers import get_ip
 
-from .models import Activity, Bounty, BountyFulfillment, Interest, Profile, ProfileSerializer, SearchHistory
+from .models import Activity, Bounty, BountyFulfillment, Interest, ProfileSerializer, SearchHistory
 
 
 class BountyFulfillmentSerializer(serializers.ModelSerializer):
