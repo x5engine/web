@@ -295,14 +295,22 @@ class BountyViewSet(viewsets.ModelViewSet):
         queryset = queryset.prefetch_related(
             'fulfillments', 'interested', 'interested__profile', 
              Prefetch('interested', queryset=Interest.objects.filter(pending=False), to_attr='interested_not_pending'),
-             Prefetch('activities__profile__avatar_baseavatar_related', queryset=Activity.objects.prefetch_related('activities__profile__avatar_baseavatar_related').filter(profile__avatar_baseavatar_related__active=True), to_attr='activities_avatars'),
+             Prefetch('activities__profile__avatar_baseavatar_related', 
+               queryset=
+                 Activity.objects.prefetch_related('activities__profile__avatar_baseavatar_related').filter(profile__avatar_baseavatar_related__active=True), 
+               to_attr='activities_avatars'
+             ),
              Prefetch('activities', 
-                queryset=
-                Activity.objects.filter(needs_review=True), to_attr='activities_needs_review'),
+               queryset=
+                 Activity.objects.filter(needs_review=True), 
+               to_attr='activities_needs_review'
+             ),
              Prefetch('activities', 
-                queryset=
-                Activity.objects.filter(activity_type__in=['bounty_abandonment_escalation_to_mods', 'bounty_abandonment_warning']) | 
-                Activity.objects.filter(needs_review=True), to_attr='activities_needs_review_or_escalated'),
+               queryset=
+                 Activity.objects.filter(activity_type__in=['bounty_abandonment_escalation_to_mods', 'bounty_abandonment_warning']) | 
+                 Activity.objects.filter(needs_review=True), 
+               to_attr='activities_needs_review_or_escalated'
+             ),
              'activities')
         return queryset
 

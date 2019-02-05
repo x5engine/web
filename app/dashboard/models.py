@@ -111,7 +111,7 @@ class BountyQuerySet(models.QuerySet):
 
     def needs_review(self):
         """Filter results by bounties that need reviewed."""
-        if hasattr(self, 'activities_needs_review'):
+        if hasattr(self, 'activities_needs_review_or_escalated'):
             return self.activities_needs_review_or_escalated
         return self.prefetch_related('activities') \
             .filter(
