@@ -2087,7 +2087,6 @@ class Profile(SuperModel):
     @property
     def active_avatar(self):
         if hasattr(self, 'activities_avatars'):
-            print('found cache')
             return self.activities_avatars[:1]
         return self.avatar_baseavatar_related.filter(active=True).first()
 
