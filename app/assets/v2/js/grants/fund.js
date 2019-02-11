@@ -98,102 +98,166 @@ $(document).ready(function() {
 
           let url;
 
-          deployedToken.methods.approve(
-            data.contract_address,
-            web3.utils.toTwosComplement(approvalSTR)
-          ).send({
-            from: accounts[0],
-            gasPrice: realGasPrice
-          }).on('error', function(error) {
-            console.log('1', error);
-            _alert({ message: gettext('Your approval transaction failed. Please try again.')}, 'error');
-          }).on('transactionHash', function(transactionHash) {
-            $('#sub_new_approve_tx_id').val(transactionHash);
-            const linkURL = etherscan_tx_url(transactionHash);
-            var token_address = $('#js-token').length ? $('#js-token').val() : $('#sub_token_address').val();
-            let data = {
-              'contributor_address': $('#contributor_address').val(),
-              'amount_per_period': $('#amount').val(),
-              'real_period_seconds': realPeriodSeconds,
-              'frequency': $('#frequency_count').val(),
-              'frequency_unit': $('#frequency_unit').val(),
-              'token_address': token_address,
-              'token_symbol': $('#token_symbol').val(),
-              'gas_price': $('#gas_price').val(),
-              'sub_new_approve_tx_id': transactionHash,
-              'num_tx_approved': $('#period').val(),
-              'network': $('#network').val(),
-              'csrfmiddlewaretoken': $("#js-fundGrant input[name='csrfmiddlewaretoken']").val()
-            };
+          // deployedToken.methods.approve(
+          //   data.contract_address,
+          //   web3.utils.toTwosComplement(approvalSTR)
+          // ).send({
+          //   from: accounts[0],
+          //   gasPrice: realGasPrice
+          // }).on('error', function(error) {
+          //   console.log('1', error);
+          //   _alert({ message: gettext('Your approval transaction failed. Please try again.')}, 'error');
+          // }).on('transactionHash', function(transactionHash) {
+          //   $('#sub_new_approve_tx_id').val(transactionHash);
+          //   const linkURL = etherscan_tx_url(transactionHash);
+          //   var token_address = $('#js-token').length ? $('#js-token').val() : $('#sub_token_address').val();
+          //   let data = {
+          //     'contributor_address': $('#contributor_address').val(),
+          //     'amount_per_period': $('#amount').val(),
+          //     'real_period_seconds': realPeriodSeconds,
+          //     'frequency': $('#frequency_count').val(),
+          //     'frequency_unit': $('#frequency_unit').val(),
+          //     'token_address': token_address,
+          //     'token_symbol': $('#token_symbol').val(),
+          //     'gas_price': $('#gas_price').val(),
+          //     'sub_new_approve_tx_id': transactionHash,
+          //     'num_tx_approved': $('#period').val(),
+          //     'network': $('#network').val(),
+          //     'csrfmiddlewaretoken': $("#js-fundGrant input[name='csrfmiddlewaretoken']").val()
+          //   };
+          //
+          //   $.ajax({
+          //     type: 'post',
+          //     url: '',
+          //     data: data,
+          //     success: json => {
+          //       console.log('successfully saved subscription');
+          //     },
+          //     error: () => {
+          //       _alert({ message: gettext('Your subscription failed to save. Please try again.') }, 'error');
+          //     }
+          //   });
 
-            $.ajax({
-              type: 'post',
-              url: '',
-              data: data,
-              success: json => {
-                console.log('successfully saved subscription');
-              },
-              error: () => {
-                _alert({ message: gettext('Your subscription failed to save. Please try again.') }, 'error');
-              }
-            });
-
-            document.issueURL = linkURL;
-            $('#transaction_url').attr('href', linkURL);
+            // document.issueURL = linkURL;
+            // $('#transaction_url').attr('href', linkURL);
             enableWaitState('#grants_form');
-            // Should add approval transactions to transaction history
-            deployedSubscription.methods.extraNonce(accounts[0]).call(function(err, nonce) {
+            // // Should add approval transactions to transaction history
+            // deployedSubscription.methods.extraNonce(accounts[0]).call(function(err, nonce) {
 
-              nonce = parseInt(nonce) + 1;
+              // nonce = parseInt(nonce) + 1;
 
-              const parts = [
-                web3.utils.toChecksumAddress(accounts[0]), // subscriber address
-                web3.utils.toChecksumAddress($('#admin_address').val()), // admin_address
-                web3.utils.toChecksumAddress(selected_token), // token denomination / address
-                web3.utils.toTwosComplement(amountSTR), // data.amount_per_period
-                web3.utils.toTwosComplement(realPeriodSeconds), // data.period_seconds
-                web3.utils.toTwosComplement(realGasPrice), // data.gas_price
-                web3.utils.toTwosComplement(nonce) // nonce
+              const domain = [
+                { name: "name", type: "string" },
+                { name: "verifyingContract", type: "address" },
+                { name: "salt", type: "bytes32" }
               ];
 
-              deployedSubscription.methods.getSubscriptionHash(...parts).call(function(err, subscriptionHash) {
-                $('#subscription_hash').val(subscriptionHash);
-                web3.eth.personal.sign('' + subscriptionHash, accounts[0], function(err, signature) {
-                  if (signature) {
-                    $('#signature').val(signature);
+              const subscription = [
+                { name: "subscriber_address", type: "address" },
+                { name: "admin_address", type: "address" },
+                { name: "selected_token", type: "address" },
+                { name: "amount_per_period", type: "uint256" },
+                { name: "period_seconds", type: "uint256" },
+                { name: "gas_price", type: "uint256" }
+              ]
 
-                    let data = {
-                      'subscription_hash': subscriptionHash,
-                      'signature': signature,
-                      'csrfmiddlewaretoken': $("#js-fundGrant input[name='csrfmiddlewaretoken']").val(),
-                      'sub_new_approve_tx_id': $('#sub_new_approve_tx_id').val()
-                    };
 
-                    $.ajax({
-                      type: 'post',
-                      url: '',
-                      data: data,
-                      success: json => {
-                        console.log('successfully saved subscriptionHash and signature');
-                        url = json.url;
-                        $('#wait').val('false');
-                      },
-                      error: () => {
-                        _alert({ message: gettext('Your subscription failed to save. Please try again.') }, 'error');
-                        url = window.location;
-                      }
-                    });
-                  }
-                });
-              });
-            });
-          }).on('confirmation', function(confirmationNumber, receipt) {
+              let domainData = {
+                name: 'Gitcoin Grants',
+                verifyingContract: data.contract_address,
+                salt: '0xf2d857f4a3edcb9b78b4d503bfe733db1e3f6cdc2b7971ee739626c97e86a558'
+              }
 
-            waitforData(() => {
-              document.suppress_loading_leave_code = true;
-              window.location = url;
-            });
-          });
+              let subscription_712 = {
+                subscriber_address: web3.utils.toChecksumAddress(accounts[0]),
+                admin_address: web3.utils.toChecksumAddress($('#admin_address').val()),
+                selected_token: web3.utils.toChecksumAddress(selected_token),
+                amount_per_period: web3.utils.toTwosComplement(amountSTR),
+                period_seconds: web3.utils.toTwosComplement(realPeriodSeconds),
+                gas_price: web3.utils.toTwosComplement(realGasPrice)
+              }
+
+              const data_712 = JSON.stringify({
+                types: {
+                  EIP712Domain: domain,
+                  Subscription: subscription
+                },
+                domain: domainData,
+                primaryType: "Subscription",
+                message: subscription_712
+              })
+
+              console.log('accounts0', typeof accounts[0]);
+
+              web3.currentProvider.sendAsync({
+                  method: "eth_signTypedData_v3",
+                  params: [accounts[0], data_712],
+                  from: accounts[0]
+              },
+                function(err, result) {
+                    if (err) {
+                        return console.error(err);
+                    }
+                    console.log('result', result);
+                    const signature = result.result.substring(2);
+                    const r = "0x" + signature.substring(0, 64);
+                    const s = "0x" + signature.substring(64, 128);
+                    const v = parseInt(signature.substring(128, 130), 16);
+
+                    console.log('siganture', signature);
+                    // The signature is now comprised of r, s, and v.
+                    }
+              );
+
+              // const parts = [
+              //   web3.utils.toChecksumAddress(accounts[0]), // subscriber address
+              //   web3.utils.toChecksumAddress($('#admin_address').val()), // admin_address
+              //   web3.utils.toChecksumAddress(selected_token), // token denomination / address
+              //   web3.utils.toTwosComplement(amountSTR), // data.amount_per_period
+              //   web3.utils.toTwosComplement(realPeriodSeconds), // data.period_seconds
+              //   web3.utils.toTwosComplement(realGasPrice), // data.gas_price
+              //   web3.utils.toTwosComplement(nonce) // nonce
+              // ];
+
+              // deployedSubscription.methods.getSubscriptionHash(...parts).call(function(err, subscriptionHash) {
+              //   $('#subscription_hash').val(subscriptionHash);
+              //   web3.eth.personal.sign('' + subscriptionHash, accounts[0], function(err, signature) {
+              //     if (signature) {
+              //       $('#signature').val(signature);
+              //
+              //       let data = {
+              //         'subscription_hash': subscriptionHash,
+              //         'signature': signature,
+              //         'csrfmiddlewaretoken': $("#js-fundGrant input[name='csrfmiddlewaretoken']").val(),
+              //         'sub_new_approve_tx_id': $('#sub_new_approve_tx_id').val()
+              //       };
+              //
+              //       $.ajax({
+              //         type: 'post',
+              //         url: '',
+              //         data: data,
+              //         success: json => {
+              //           console.log('successfully saved subscriptionHash and signature');
+              //           url = json.url;
+              //           $('#wait').val('false');
+              //         },
+              //         error: () => {
+              //           _alert({ message: gettext('Your subscription failed to save. Please try again.') }, 'error');
+              //           url = window.location;
+              //         }
+              //       });
+              //     }
+              //   });
+              // });
+          //   });
+          // })
+          // .on('confirmation', function(confirmationNumber, receipt) {
+          //
+          //   waitforData(() => {
+          //     document.suppress_loading_leave_code = true;
+          //     window.location = url;
+          //   });
+          // });
         });
       });
     }
