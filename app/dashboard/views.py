@@ -1731,6 +1731,8 @@ def new_bounty_back(request):
 
 def new_bounty(request):
     """Create a new bounty."""
+    import faulthandler
+    faulthandler.enable()
     from .utils import clean_bounty_url
     bounty_params = {
         'newsletter_headline': _('Be the first to know about new funded issues.'),
