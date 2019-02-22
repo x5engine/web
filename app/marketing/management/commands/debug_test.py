@@ -29,10 +29,11 @@ class Command(BaseCommand):
             print("cannot be run without settings.DEBUG")
             return
 
-        from kudos.models import Token
-        from avatar.utils import svg_to_png_inkscape
+        from avatar.models import CustomAvatar
 
-        token = Token.objects.get(pk=182)
-        file_path = f"/code/app/assets/{token.image}"
-        with open(file_path, 'rb') as f:
-            print(svg_to_png_inkscape(f.read()))
+        for ca in CustomAvatar.objects.all():
+            if ca and ca.png and ca.png.url:
+                print(f"wget ca.png.url")
+        print('convert -delay 20 -loop 0 "*.png" $HOME/Desktop/animated.gif')
+
+        
