@@ -419,10 +419,7 @@ class Bounty(SuperModel):
     @property
     def title_or_desc(self):
         """Return the title of the issue."""
-        if not self.title:
-            title = self.fetch_issue_item('title') or self.github_url
-            return title
-        return self.title
+        return 'NA'
 
     @property
     def issue_description_text(self):
@@ -743,11 +740,7 @@ class Bounty(SuperModel):
             str: The Github API URL associated with the issue.
 
         """
-        from urllib.parse import urlparse
-        if self.github_url.lower()[:19] != 'https://github.com/':
-            return ''
-        url_path = urlparse(self.github_url).path
-        return 'https://api.github.com/repos' + url_path
+        return 'na'
 
     def fetch_issue_item(self, item_type='body'):
         """Fetch the item type of an issue.
@@ -759,18 +752,7 @@ class Bounty(SuperModel):
             str: The item content.
 
         """
-        github_url = self.get_github_api_url()
-        if github_url:
-            issue_description = requests.get(github_url, auth=_AUTH)
-            if issue_description.status_code == 200:
-                item = issue_description.json().get(item_type, '')
-                if item_type == 'body' and item:
-                    self.issue_description = item
-                elif item_type == 'title' and item:
-                    self.title = item
-                self.save()
-                return item
-        return ''
+        return 'NA'
 
     def fetch_issue_comments(self, save=True):
         """Fetch issue comments for the associated Github issue.
@@ -782,32 +764,8 @@ class Bounty(SuperModel):
             dict: The comments data dictionary provided by Github.
 
         """
-        if self.github_url.lower()[:19] != 'https://github.com/':
-            return []
+        return 'NA'
 
-        parsed_url = urlsplit(self.github_url)
-        try:
-            github_user, github_repo, _, github_issue = parsed_url.path.split('/')[1:5]
-        except ValueError:
-            logger.info(f'Invalid github url for Bounty: {self.pk} -- {self.github_url}')
-            return []
-        comments = get_issue_comments(github_user, github_repo, github_issue)
-        if isinstance(comments, dict) and comments.get('message', '') == 'Not Found':
-            logger.info(f'Bounty {self.pk} contains an invalid github url {self.github_url}')
-            return []
-        comment_count = 0
-        for comment in comments:
-            if (isinstance(comment, dict) and comment.get('user', {}).get('login', '') not in settings.IGNORE_COMMENTS_FROM):
-                comment_count += 1
-        self.github_comments = comment_count
-        if comment_count:
-            comment_times = [datetime.strptime(comment['created_at'], '%Y-%m-%dT%H:%M:%SZ') for comment in comments]
-            max_comment_time = max(comment_times)
-            max_comment_time = max_comment_time.replace(tzinfo=pytz.utc)
-            self.last_comment_date = max_comment_time
-        if save:
-            self.save()
-        return comments
 
     @property
     def next_bounty(self):
@@ -893,21 +851,8 @@ class Bounty(SuperModel):
 
     @property
     def github_issue_state(self):
-        current_github_state = self.github_issue_details.get('state') if self.github_issue_details else None
-        if not current_github_state:
-            try:
-                _org_name = org_name(self.github_url)
-                _repo_name = repo_name(self.github_url)
-                _issue_num = issue_number(self.github_url)
-                gh_issue_details = get_gh_issue_details(_org_name, _repo_name, int(_issue_num))
-                if gh_issue_details:
-                    self.github_issue_details = gh_issue_details
-                    self.save()
-                    current_github_state = self.github_issue_details.get('state', 'open')
-            except Exception as e:
-                logger.info(e)
-                return 'open'
-        return current_github_state
+        return 'NA'
+
 
     @property
     def is_issue_closed(self):
@@ -2290,10 +2235,8 @@ class Profile(SuperModel):
         return bounties
 
     def get_orgs_bounties(self, network=None):
-        network = network or self.get_network()
-        url = f"https://github.com/{self.handle}"
-        bounties = Bounty.objects.current().filter(network=network, github_url__icontains=url)
-        return bounties
+        return "na"
+
 
     def get_leaderboard_index(self, key='quarterly_earners'):
         try:

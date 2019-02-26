@@ -23,6 +23,7 @@ from datetime import datetime
 import django_filters.rest_framework
 from rest_framework import routers, serializers, viewsets
 from retail.helpers import get_ip
+from django.db.models import Prefetch
 
 from .models import Activity, Bounty, BountyFulfillment, Interest, ProfileSerializer, SearchHistory
 
@@ -288,6 +289,28 @@ class BountyViewSet(viewsets.ModelViewSet):
                     data=data,
                     ip_address=get_ip(self.request)
                 )
+        if False:
+            queryset = queryset.prefetch_related(
+                'fulfillments', 'interested', 'interested__profile', 
+                 Prefetch('interested', queryset=Interest.objects.filter(pending=False), to_attr='interested_not_pending'),
+                 Prefetch('activities__profile__avatar_baseavatar_related', 
+                   queryset=
+                     Activity.objects.prefetch_related('profile__avatar_baseavatar_related').filter(profile__avatar_baseavatar_related__active=True), 
+                   to_attr='activities_avatars'
+                 ),
+                 Prefetch('activities', 
+                   queryset=
+                     Activity.objects.filter(needs_review=True), 
+                   to_attr='activities_needs_review'
+                 ),
+                 Prefetch('activities', 
+                   queryset=
+                     Activity.objects.filter(activity_type__in=['bounty_abandonment_escalation_to_mods', 'bounty_abandonment_warning']) | 
+                     Activity.objects.filter(needs_review=True), 
+                   to_attr='activities_needs_review_or_escalated'
+                 ),
+                 'activities')
+
 
 
         return queryset
