@@ -186,6 +186,7 @@ class Grant(SuperModel):
         help_text=_('The team members contributing to this Grant.'),
     )
     image_css = models.CharField(default='', blank=True, max_length=255, help_text=_('additional CSS to attach to the grant-banner img.'))
+    is_paid_plan = models.BooleanField(default=False, help_text=_('Is this grant part of the gitcoin paid plans or not?'))
 
     # Grant Query Set used as manager.
     objects = GrantQuerySet.as_manager()
