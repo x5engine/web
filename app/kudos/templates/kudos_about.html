@@ -31,8 +31,8 @@
       <!-- {% include 'shared/kudos_banner.html' %} -->
       <div class="container text-center mt-5">
         <h1 class="white h2">
-          Kudos is a new way to show<br>
-          appreciation and build relationships.
+          Negs are a new way to give<br>
+          backhanded compliments to your coworkers.
         </h1>
       </div>
       <div class="container pt-5">
@@ -40,17 +40,54 @@
           <div class="carousel-inner">
             <div class="carousel-item active">
               <div class="row justify-content-center">
-                {% for listing in listings %}
+
+
                   <div class="col-xs-12 col-sm-6 col-lg-3">
-                    {% include 'shared/kudos_card.html' %}
+
+                    <div class="kd-card">
+                      <a href="#">
+                        <img id="kudosImage" data-src="{% static "v2/images/negs/1.svg" %}" alt="" class="img-thumbnail kd-shadow border-transparent" width="250">
+                      </a>
+                      <span class="kd-price">{{ listing.price_in_eth }} ETH</span>
+                      <div class="kd-name text-truncate" title="">Quality Level: Windows XP</div>
+                    </div>
+
                   </div>
-                {% if forloop.counter|divisibleby:4 and not forloop.last %}
-              </div>
-            </div>
-            <div class="carousel-item">
-              <div class="row justify-content-center">
-                {% endif %}
-                {% endfor %}
+                  <div class="col-xs-12 col-sm-6 col-lg-3">
+
+                    <div class="kd-card">
+                      <a href="#">
+                        <img id="kudosImage" data-src="{% static "v2/images/negs/2.svg" %}" alt="" class="img-thumbnail kd-shadow border-transparent" width="250">
+                      </a>
+                      <span class="kd-price">{{ listing.price_in_eth }} ETH</span>
+                      <div class="kd-name text-truncate" title="">Did Clippy Write This?</div>
+                    </div>
+
+                  </div>
+                  <div class="col-xs-12 col-sm-6 col-lg-3">
+
+                    <div class="kd-card">
+                      <a href="#">
+                        <img id="kudosImage" data-src="{% static "v2/images/negs/3.svg" %}" alt="" class="img-thumbnail kd-shadow border-transparent" width="250">
+                      </a>
+                      <span class="kd-price">{{ listing.price_in_eth }} ETH</span>
+                      <div class="kd-name text-truncate" title="">Lint your Code</div>
+                    </div>
+
+                  </div>
+                  <div class="col-xs-12 col-sm-6 col-lg-3">
+
+                    <div class="kd-card">
+                      <a href="#">
+                        <img id="kudosImage" data-src="{% static "v2/images/negs/4.svg" %}" alt="" class="img-thumbnail kd-shadow border-transparent" width="250">
+                      </a>
+                      <span class="kd-price">{{ listing.price_in_eth }} ETH</span>
+                      <div class="kd-name text-truncate" title="">BUGS! Bugs Everywhere</div>
+                    </div>
+
+                  </div>
+
+
               </div>
             </div>
           </div> <!-- carousel-inner -->
@@ -67,7 +104,7 @@
         </div> <!-- /carousel -->
 
         <div class="row justify-content-center pb-5">
-          <a class="btn btn-gc-blue m-5" href="{% url 'kudos_marketplace' %}">{% trans "See More Kudos" %}</a>
+          <a class="btn btn-gc-blue m-5" href="{% url 'kudos_marketplace' %}">{% trans "See More Negs" %}</a>
         </div>
       </div>
     </header>
@@ -79,8 +116,8 @@
           <img class="mw-100 position-absolute star-pulse" src="{% static "v2/images/kudos/assets/star.png" %}" alt="kudos" width="">
           {% url 'kudos_marketplace' as marketplace_url %}
           {% blocktrans %}
-            <p class="mt-5">Kudos is a way of <span class="text-highlight-green">showing your appreciation</span> for another Gitcoin member.
-            <br>It's also a way to <span class="text-highlight-green">showcase special skills</span> that a member might have, such as Pythonista, or Design Star. Kudos tokens can be <span class="text-highlight-green">bought</span> and <span class="text-highlight-green">sold</span> on the <a class="text-highlight-gc-blue" href="{{ marketplace_url }}">Kudos Marketplace</a>.</p>
+            <p class="mt-5">Negs is a way of <span class="text-highlight-green">showing your appreciation</span> for another team member, but in a sarcastic way.
+            <br>It's also a way to <span class="text-highlight-green">showcase shit you can't stand</span> that a member might have, such as body odors, or things you saw on Zoom you shouldn't have.  The line is super thin.  And it can be super confusing to know why you were sent a Neg.  Negs tokens can be <span class="text-highlight-green">bought</span> and <span class="text-highlight-green">sold</span> on the <a class="text-highlight-gc-blue" href="{{ marketplace_url }}">Negs Marketplace</a>.</p>
           {% endblocktrans %}
         </div>
       </div>

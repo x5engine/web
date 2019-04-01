@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="75px" height="21px" viewBox="0 0 75 21" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 51.3 (57544) - http://www.bohemiancoding.com/sketch -->
+    <title>Group</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Group" transform="translate(1.000000, -5.000000)">
+            <g id="kudos-logo" transform="translate(0.000000, 6.000000)" stroke="#0ECF7C" stroke-width="2">
+                <path d="M3.62,1.61 L-1,9.53013895 L3.62,17.45 L12.8601404,17.45 L17.48,9.53013895 L12.8601404,1.61 L3.62,1.61 Z M-0.837852867,9.53013895 L3.70114376,1.74894737 L12.7789966,1.74894737 L17.3179933,9.53013895 L12.7789966,17.3110526 L3.70114376,17.3110526 L-0.837852867,9.53013895 Z" id="Fill-1" transform="translate(8.240000, 9.530000) rotate(90.000000) translate(-8.240000, -9.530000) "></path>
+            </g>
+            <text id="NEGS" font-family="Muli" font-size="20" font-weight="normal">
+                <tspan x="20.4345703" y="24" fill="#FFFFFF">N</tspan>
+                <tspan x="36.0400391" y="24" fill="#00D179">E</tspan>
+                <tspan x="47.7978516" y="24" fill="#FFFFFF">GS</tspan>
+            </text>
+        </g>
+    </g>
+</svg>
