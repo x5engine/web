@@ -23,6 +23,7 @@ from tempfile import NamedTemporaryFile
 
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 
 from dashboard.utils import create_user_action, is_blocked
@@ -189,7 +190,14 @@ def handle_avatar(request, _org_name='', add_gitcoincologo=False):
             profile = Profile.objects.prefetch_related('avatar_baseavatar_related')\
                 .filter(handle__iexact=_org_name).first()
             if profile and profile.active_avatar:
-                avatar_file, content_type = profile.active_avatar.determine_response(request.GET.get('email', False))
+                use_svg = request.GET.get('email', False)
+                do_redirect_instead_of_serve = True
+                if do_redirect_instead_of_serve:
+                    target_url = profile.active_avatar.png.url
+                    if use_svg:
+                        target_url = profile.active_avatar.svg.url
+                    return redirect(profile.active_avatar.png.url)
+                avatar_file, content_type = profile.active_avatar.determine_response(use_svg)
                 if avatar_file:
                     return HttpResponse(avatar_file, content_type=content_type)
         except Exception as e:
