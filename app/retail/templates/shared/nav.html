@@ -15,12 +15,17 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 {% endcomment %}
-{% load i18n static matches %}
+{% load i18n static matches cookielaw_tags %}
 <nav class="navbar navbar-expand-md navbar-dark g-font-muli gitcoin-background">
-  <a class="navbar-brand pt-0 pb-0" href="/bounties/funder">
-    <img id="logo" src="{% static "v2/images/top-bar/bounties_desktop.svg" %}" height="35" />
+  <a class="d-none d-md-block mr-2 mb-1" href="{% url 'index' %}">
+    {% include 'shared/helmet-white-animated.html' %}
+  </a>
+  <i class="white font-bigger-2 d-none d-md-block fa fa-angle-right"></i>
+  <a class="navbar-brand ml-2 pt-0 pb-0" href="/bounties/funder">
+    <img id="logo" src="{% static "v2/images/top-bar/bounties_desktop.svg" %}" height="40" alt="Logo" class="w-auto" />
   </a>
   {% if request.path|matches:"^\/((explorer)|(issue.*)|(.*new.*))$" %}
+    <!-- TODO: FIGURE HOW TO HANDLE FOR CROSS CHAIN -->
     <div class="navbar-network ml-xl-5 py-1 px-2 hidden">
       <i class="fas fa-circle pr-1"></i>
       <span id="current-network"></span>
@@ -32,6 +37,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     {% if user.is_authenticated %}
+      {% include 'shared/chat_nav.html' %}
       {% include 'shared/notifications.html' %}
     {% endif %}
   </div>
@@ -49,6 +55,7 @@
         </a>
         <div class="dropdown-menu dropdown-menu-right" id="explore-tab" aria-labelledby="navbarDropdownHow">
           <a class="dropdown-item{% if active == 'dashboard' %} selected{% endif %} interior" href="{% url "explorer" %}">{% trans "Bounties" %}</a>
+          <a class="dropdown-item{% if active == 'get_hackathons' %} selected{% endif %} interior" href="{% url "get_hackathons" %}">{% trans "Hackathons" %}</a>
           <a class="dropdown-item{% if active == 'users_directory' %} selected{% endif %} interior" href="{% url "users_directory" %}">{% trans "Users" %}</a>
           <a class="dropdown-item{% if active == 'leaderboard' %} selected{% endif %} interior" href="{% url "_leaderboard" %}">{% trans "Leaderboard" %}</a>
           <a class="dropdown-item{% if active == 'activity' %} selected{% endif %} interior" href="{% url "activity" %}">{% trans "Activity Stream" %}</a>
@@ -95,3 +102,4 @@
 {% if request.path|matches:"^\/((explorer)|(issue.*)|(.*new.*)|(.*fund.*)|(.*cancel.*))$" %}
   <p id="navbar-network-banner" class="px-0 py-1 m-0 font-caption hidden"></p>
 {% endif %}
+{% cookielaw_banner %}

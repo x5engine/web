@@ -2,8 +2,10 @@ from django.contrib import sitemaps
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
-from dashboard.models import Bounty, Profile
+from dashboard.models import Activity, Bounty, HackathonEvent, Profile
+from grants.models import Grant
 from kudos.models import Token
+from quests.models import Quest
 
 
 class StaticViewSitemap(sitemaps.Sitemap):
@@ -15,7 +17,7 @@ class StaticViewSitemap(sitemaps.Sitemap):
         return [
             'dashboard', 'new_funding', 'tip', 'terms', 'privacy', 'cookie', 'prirp', 'apitos', 'about', 'index',
             'help', 'whitepaper', 'whitepaper_access', '_leaderboard', 'faucet', 'mission', 'slack', 'labs', 'results',
-            'activity', 'kudos_main', 'kudos_marketplace', 'grants', 'funder_bounties'
+            'activity', 'kudos_main', 'kudos_marketplace', 'grants', 'funder_bounties', 'quests_index', 'newquest'
         ]
 
     def location(self, item):
@@ -100,6 +102,62 @@ class ResultsSitemap(Sitemap):
         return f'/results/{item}'
 
 
+class GrantsSitemap(Sitemap):
+    changefreq = "weekly"
+    priority = 0.6
+
+    def items(self):
+        return Grant.objects.filter(hidden=False).cache()
+
+    def lastmod(self, obj):
+        return obj.modified_on
+
+    def location(self, item):
+        return item.url
+
+
+class QuestsSitemap(Sitemap):
+    changefreq = "weekly"
+    priority = 0.6
+
+    def items(self):
+        return Quest.objects.filter(visible=True).cache()
+
+    def lastmod(self, obj):
+        return obj.modified_on
+
+    def location(self, item):
+        return item.url
+
+
+class HackathonEventSiteMap(Sitemap):
+    changefreq = "weekly"
+    priority = 0.6
+
+    def items(self):
+        return HackathonEvent.objects.filter(visible=True).cache()
+
+    def lastmod(self, obj):
+        return obj.modified_on
+
+    def location(self, item):
+        return item.url
+
+
+class ActivitySitemap(Sitemap):
+    changefreq = "weekly"
+    priority = 0.6
+
+    def items(self):
+        return Activity.objects.filter(private=False).cache()
+
+    def lastmod(self, obj):
+        return obj.modified_on
+
+    def location(self, item):
+        return item.url
+
+
 sitemaps = {
     'landers': ContributorLandingPageSitemap,
     'results': ResultsSitemap,
@@ -107,4 +165,8 @@ sitemaps = {
     'issues': IssueSitemap,
     'orgs': ProfileSitemap,
     'kudos': KudosSitemap,
+    'activity': ActivitySitemap,
+    'quests': QuestsSitemap,
+    'grants': GrantsSitemap,
+    'hackathons': HackathonEventSiteMap,
 }

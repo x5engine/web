@@ -1,5 +1,5 @@
 {% comment %}
-  Copyright (C) 2018 Gitcoin Core
+  Copyright (C) 2020 Gitcoin Core
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published
@@ -58,10 +58,10 @@
     </div>
     {% include 'shared/analytics.html' %}
     {% include 'shared/footer_scripts.html' %}
-    {% include 'shared/messages.html' %}
+    
   </body>
   {% csrf_token %}
-  <script type="text/javascript">
+  <script>
     var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
     var jobLocations = {% if profile.job_location %}{{profile.job_location|safe }};{% else %}[];{% endif %}
   </script>

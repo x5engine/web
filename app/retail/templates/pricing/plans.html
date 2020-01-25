@@ -1,5 +1,5 @@
 {% comment %}
-  Copyright (C) 2018 Gitcoin Core
+  Copyright (C) 2020 Gitcoin Core
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published
@@ -114,12 +114,11 @@
         </div>
       </div>
     </div>
+    {% include 'shared/bottom_notification.html' %}
+    {% include 'shared/analytics.html' %}
+    {% include 'shared/footer_scripts.html' with slim=1 %}
+    {% include 'shared/footer.html' %}
   </body>
-  {% include 'shared/bottom_notification.html' %}
-  {% include 'shared/analytics.html' %}
-  {% include 'shared/footer_scripts.html' with slim=1 %}
-  {% include 'shared/footer.html' %}
-  {% include 'shared/messages.html' %}
   <script src="{% static 'v2/js/lib/animate-number.min.js' %}"></script>
   <script>
      $('#package-period').change(function() {

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Define custom healthchecks.
 
-Copyright (C) 2018 Gitcoin Core
+Copyright (C) 2020 Gitcoin Core
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -52,7 +52,7 @@ class InfuraIPFSBackend(BaseHealthCheckBackend):
         """Define the functionality of the health check."""
         from dashboard.utils import get_ipfs
         try:
-            ipfs_connection = get_ipfs(host='https://ipfs.infura.io', port=5001)
+            ipfs_connection = get_ipfs(host='ipfs.infura.io', port=5001)
         except IPFSCantConnectException:
             ipfs_connection = None
 

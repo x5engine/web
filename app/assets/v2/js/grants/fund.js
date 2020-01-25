@@ -8,8 +8,17 @@ let selected_token;
 let splitterAddress;
 let gitcoinDonationAddress;
 
+document.suppress_faucet_solicitation = 1;
 
 $(document).ready(function() {
+
+  predictPhantomCLRMatch();
+  predictCLRMatch();
+
+  $('#amount').on('input', () => {
+    predictCLRMatch();
+  });
+
   gitcoinDonationAddress = $('#gitcoin_donation_address').val();
   splitterAddress = $('#splitter_contract_address').val();
 
@@ -22,6 +31,18 @@ $(document).ready(function() {
   });
 
   updateSummary();
+
+  $('#grants_form .nav-item').click(function(e) {
+    $('.nav-item a').removeClass('active');
+    $(this).find('a').addClass('active');
+    var targetid = $(this).find('a').data('target');
+    var target = $('#' + targetid);
+
+    $('.tab_target').addClass('hidden');
+    target.removeClass('hidden');
+
+    e.preventDefault();
+  });
 
   $('#frequency_unit, #js-token').on('select2:select', event => {
     updateSummary();
@@ -189,32 +210,42 @@ $(document).ready(function() {
             approvalAddress = data.contract_address;
           }
 
-          deployedToken.methods.approve(
-            approvalAddress,
-            web3.utils.toTwosComplement(approvalSTR)
-          ).send({
-            from: accounts[0],
-            gasPrice: web3.utils.toHex($('#gasPrice').val() * Math.pow(10, 9))
-          }).on('error', function(error) {
-            console.log('1', error);
-            _alert({ message: gettext('Your approval transaction failed. Please try again.')}, 'error');
-          }).on('transactionHash', function(transactionHash) {
-            $('#sub_new_approve_tx_id').val(transactionHash);
-            if (data.num_periods == 1) {
-              // call splitter after approval
-              splitPayment(accounts[0], data.admin_address, gitcoinDonationAddress, Number(grant_amount * Math.pow(10, decimals)).toLocaleString('fullwide', {useGrouping: false}), Number(gitcoin_grant_amount * Math.pow(10, decimals)).toLocaleString('fullwide', {useGrouping: false}));
+          deployedToken.methods.balanceOf(
+            accounts[0]
+          ).call().then(function(result) {
+            if (result < realTokenAmount) {
+              _alert({ message: gettext('You do not have enough tokens to make this transaction.')}, 'error');
             } else {
-              if (data.contract_version == 0 && gitcoin_grant_amount > 0) {
-                donationPayment(deployedToken, accounts[0], Number(gitcoin_grant_amount * Math.pow(10, decimals)).toLocaleString('fullwide', {useGrouping: false}));
-              }
-              subscribeToGrant(transactionHash);
-            }
-          }).on('confirmation', function(confirmationNumber, receipt) {
-            waitforData(() => {
-              document.suppress_loading_leave_code = true;
-              window.location = redirectURL;
-            }); // waitforData
-          }); // approve on confirmation
+              deployedToken.methods.approve(
+                approvalAddress,
+                web3.utils.toTwosComplement(approvalSTR)
+              ).send({
+                from: accounts[0],
+                gasPrice: web3.utils.toHex($('#gasPrice').val() * Math.pow(10, 9)),
+                gas: web3.utils.toHex(gas_amount(document.location.href)),
+                gasLimit: web3.utils.toHex(gas_amount(document.location.href))
+              }).on('error', function(error) {
+                console.log('1', error);
+                _alert({ message: gettext('Your approval transaction failed. Please try again.')}, 'error');
+              }).on('transactionHash', function(transactionHash) {
+                $('#sub_new_approve_tx_id').val(transactionHash);
+                if (data.num_periods == 1) {
+                  // call splitter after approval
+                  splitPayment(accounts[0], data.admin_address, gitcoinDonationAddress, Number(grant_amount * Math.pow(10, decimals)).toLocaleString('fullwide', {useGrouping: false}), Number(gitcoin_grant_amount * Math.pow(10, decimals)).toLocaleString('fullwide', {useGrouping: false}));
+                } else {
+                  if (data.contract_version == 0 && gitcoin_grant_amount > 0) {
+                    donationPayment(deployedToken, accounts[0], Number(gitcoin_grant_amount * Math.pow(10, decimals)).toLocaleString('fullwide', {useGrouping: false}));
+                  }
+                  subscribeToGrant(transactionHash);
+                }
+              }).on('confirmation', function(confirmationNumber, receipt) {
+                waitforData(() => {
+                  document.suppress_loading_leave_code = true;
+                  window.location = redirectURL;
+                }); // waitforData
+              }); // approve on confirmation
+            } // if (result < realTokenAmount)
+          }); // check token balance
         }); // getAccounts
       }); // decimals
     } // submitHandler
@@ -295,7 +326,7 @@ const subscribeToGrant = (transactionHash) => {
       $('#transaction_url').attr('href', linkURL);
       enableWaitState('#grants_form');
       // TODO: fix the tweet modal
-      // $('#tweetModal').modal('show');
+      $('#tweetModal').css('display', 'block');
 
       deployedSubscription.methods.extraNonce(accounts[0]).call(function(err, nonce) {
 
@@ -367,6 +398,34 @@ const saveSubscription = (data, isOneTimePayment) => {
   });
 };
 
+const saveSplitTx = (data, splitTxID, confirmed) => {
+  if (splitTxID) {
+    data['split_tx_id'] = splitTxID;
+  }
+
+  if (confirmed) {
+    data['split_tx_confirmed'] = true;
+  }
+
+  $.ajax({
+    type: 'post',
+    url: '',
+    data: data,
+    success: json => {
+      console.log('successfully saved subscription');
+      if (json.url != undefined) {
+        redirectURL = json.url;
+        $('#wait').val('false');
+      }
+    },
+    error: (error) => {
+      console.log(error);
+      _alert({ message: gettext('Your subscription failed to save. Please try again.') }, 'error');
+      redirectURL = window.location;
+    }
+  });
+};
+
 const splitPayment = (account, toFirst, toSecond, valueFirst, valueSecond) => {
   var data = {};
   var form = $('#js-fundGrant');
@@ -388,6 +447,14 @@ const splitPayment = (account, toFirst, toSecond, valueFirst, valueSecond) => {
     console.log('1', error);
     _alert({ message: gettext('Your payment transaction failed. Please try again.')}, 'error');
   }).on('transactionHash', function(transactionHash) {
+    data = {
+      'subscription_hash': 'onetime',
+      'signature': 'onetime',
+      'csrfmiddlewaretoken': $("#js-fundGrant input[name='csrfmiddlewaretoken']").val(),
+      'sub_new_approve_tx_id': $('#sub_new_approve_tx_id').val()
+    };
+    saveSplitTx(data, transactionHash, false);
+
     waitforData(() => {
       document.suppress_loading_leave_code = true;
       window.location = redirectURL;
@@ -400,7 +467,7 @@ const splitPayment = (account, toFirst, toSecond, valueFirst, valueSecond) => {
     $('#transaction_url').attr('href', linkURL);
     enableWaitState('#grants_form');
     // TODO: Fix tweet modal
-    // $('#tweetModal').modal('show');
+    $('#tweetModal').css('display', 'block');
   }).on('confirmation', function(confirmationNumber, receipt) {
     data = {
       'subscription_hash': 'onetime',
@@ -410,6 +477,7 @@ const splitPayment = (account, toFirst, toSecond, valueFirst, valueSecond) => {
     };
     console.log('confirmed!');
     saveSubscription(data, true);
+    saveSplitTx(data, false, true);
   });
 };
 
@@ -477,6 +545,100 @@ const splitGrantAmount = () => {
   }
 
   $('.gitcoin-grant-percent').html(percent);
-  $('.summary-gitcoin-amount').html(gitcoin_grant_amount);
+  $('.summary-gitcoin-amount').html(gitcoin_grant_amount.toFixed(2));
   $('#summary-amount').html(grant_amount);
+};
+
+const lerp = (x_lower, x_upper, y_lower, y_upper, x) => {
+  return y_lower + (((y_upper - y_lower) * (x - x_lower)) / (x_upper - x_lower));
+};
+
+const predictPhantomCLRMatch = () => {
+
+  let amount = phantom_value;
+
+  if (typeof clr_prediction_curve_per_grant == 'undefined') {
+    return;
+  }
+  for (var grant_id in clr_prediction_curve_per_grant) {
+    if (grant_id) {
+      var curve_per_grant = clr_prediction_curve_per_grant[grant_id].map(function(value, index) {
+        return value[1];
+      });
+
+      if (0 <= amount && amount <= 1) {
+        x_lower = 0;
+        x_upper = 1;
+        y_lower = curve_per_grant[0];
+        y_upper = curve_per_grant[1];
+      } else if (1 < amount && amount <= 10) {
+        x_lower = 1;
+        x_upper = 10;
+        y_lower = curve_per_grant[1];
+        y_upper = curve_per_grant[2];
+      }
+      let predicted_clr = lerp(x_lower, x_upper, y_lower, y_upper, amount);
+
+      $('.phantom_clr_increase' + grant_id).html((predicted_clr - curve_per_grant[0]).toFixed(2));
+    }
+  }
+};
+
+const predictCLRMatch = () => {
+
+  let amount = Number.parseFloat($('#amount').val());
+
+  if (amount > 10000) {
+    amount = 10000;
+  }
+
+  let predicted_clr = 0;
+
+  const contributions_axis = [ 0, 1, 10, 100, 1000, 10000 ];
+
+  let index = 0;
+
+  if (isNaN(amount)) {
+    predicted_clr = clr_prediction_curve[index];
+  } else if (contributions_axis.indexOf(amount) >= 0) {
+    index = contributions_axis.indexOf(amount);
+    predicted_clr = clr_prediction_curve[index];
+  } else {
+    let x_lower = 0;
+    let x_upper = 0;
+    let y_lower = 0;
+    let y_upper = 0;
+
+    if (0 < amount && amount < 1) {
+      x_lower = 0;
+      x_upper = 1;
+      y_lower = clr_prediction_curve[0];
+      y_upper = clr_prediction_curve[1];
+    } else if (1 < amount && amount < 10) {
+      x_lower = 1;
+      x_upper = 10;
+      y_lower = clr_prediction_curve[1];
+      y_upper = clr_prediction_curve[2];
+    } else if (10 < amount && amount < 100) {
+      x_lower = 10;
+      x_upper = 100;
+      y_lower = clr_prediction_curve[2];
+      y_upper = clr_prediction_curve[3];
+    } else if (100 < amount && amount < 1000) {
+      x_lower = 100;
+      x_upper = 1000;
+      y_lower = clr_prediction_curve[3];
+      y_upper = clr_prediction_curve[4];
+    } else {
+      x_lower = 1000;
+      x_upper = 10000;
+      y_lower = clr_prediction_curve[4];
+      y_upper = clr_prediction_curve[5];
+    }
+
+    predicted_clr = lerp(x_lower, x_upper, y_lower, y_upper, amount);
+  }
+
+  $('.clr_match_prediction').html(predicted_clr.toFixed(2));
+  $('.clr_increase').html((predicted_clr - clr_prediction_curve[0]).toFixed(2));
 };

@@ -23,6 +23,12 @@ var clear_metadata = function() {
   document.hash1 = undefined;
 };
 
+$('#secret_link').click(function() {
+  let is_checked = $(this).is(':checked');
+
+  $('.to_name').toggleClass('hidden');
+});
+
 var set_metadata = function(callback) {
   var account = generate_or_get_private_key();
   var shares = account['shares'];
@@ -81,12 +87,13 @@ $(document).ready(function() {
     var email = $('#email').val();
     var github_url = $('#issueURL').val();
     var from_name = $('#fromName').val();
-    var username = $('.username-search').select2('data')[0].text;
+    var username = $('.username-search').select2('data')[0] ? $('.username-search').select2('data')[0].text : '';
     var amount = parseFloat($('#amount').val());
     var comments_priv = $('#comments_priv').val();
     var comments_public = $('#comments_public').val();
     var from_email = $('#fromEmail').val();
     var accept_tos = $('#tos').is(':checked');
+    var secret_link = $('#secret_link').is(':checked');
     var tokenAddress = (
       ($('#token').val() == '0x0') ?
         '0x0000000000000000000000000000000000000000'
@@ -102,6 +109,11 @@ $(document).ready(function() {
       tokenName = tokenDetails.name;
     }
 
+    if (!username && !secret_link) {
+      _alert('Please enter a recipient', 'error');
+      return;
+    }
+
     var success_callback = function(txid) {
 
       startConfetti();
@@ -115,6 +127,11 @@ $(document).ready(function() {
       $('#trans_link').attr('href', url);
       $('#trans_link2').attr('href', url);
       unloading_button($(this));
+      dataLayer.push({
+        'event': 'sendtip',
+        'category': 'sendtip',
+        'action': 'sendtip'
+      });
     };
     var failure_callback = function() {
       unloading_button($('#send'));
@@ -173,7 +190,8 @@ function sendTip(email, github_url, from_name, username, amount, comments_public
     username = '@' + username;
   }
 
-  var gas_money = parseInt(Math.pow(10, (9 + 5)) * ((defaultGasPrice * 1.001) / Math.pow(10, 9)));
+  var gas_multiplier = 1.008;
+  var gas_money = parseInt(Math.pow(10, (9 + 5)) * ((defaultGasPrice * gas_multiplier) / Math.pow(10, 9)));
   var isSendingETH = (tokenAddress == '0x0' || tokenAddress == '0x0000000000000000000000000000000000000000');
   var tokenDetails = tokenAddressToDetails(tokenAddress);
   var tokenName = 'ETH';
@@ -298,6 +316,7 @@ function sendTip(email, github_url, from_name, username, amount, comments_public
         indicateMetamaskPopup();
         if (isSendingETH) {
           web3.eth.sendTransaction({
+            from: fromAccount,
             to: destinationAccount,
             value: amountInDenom,
             gasPrice: web3.toHex(get_gas_price())

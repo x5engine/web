@@ -1,3 +1,18 @@
+.grant_details span.box {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  padding: 0px;
+}
+
+#section-nav-description .ql-toolbar {
+  display: none;
+}
+
+#section-nav-description .ql-container {
+  border-color: transparent;
+}
+
 @media (min-width: 1200px) {
   .grant-detail .container {
     max-width: 85vw
@@ -12,7 +27,16 @@
   }
 }
 
-.grant_details {
+.ql-editor {
+  font-family: 'Muli';
+}
+
+.ql-editor[contenteditable="false"] {
+  padding: 12px 15px !important;
+}
+
+.grant_details,
+#section-nav-description .ql-container {
   background-color: #F8FAFC;
 }
 
@@ -94,9 +118,15 @@
   background: white !important;
 }
 
+input:disabled,
+textarea:disabled {
+  background: white;
+  color: #000;
+}
+
 input.editable,
 textarea.editable {
-  margin-top: 6px;
+  margin-top: 6px !important;
   border: 1px solid #e2eaf2;
   background: white;
   padding: 7px 14px !important;
@@ -183,7 +213,8 @@ textarea.editable {
 
 .grant__stakeholders-list img,
 .grant-item__members img,
-.grant-item__owner-image img {
+.grant-item__owner-image img,
+.grant-item__owner img {
   border-radius: 50%;
   width: 50px;
   height: 50px;
@@ -207,10 +238,6 @@ textarea.editable {
 
 .milestones-list li:last-child {
   padding-bottom: 0 !important;
-}
-
-#contract_owner_button-container {
-  outline: none;
 }
 
 .disable-tooltip {

@@ -1,7 +1,7 @@
 {% extends "admin/base_site.html" %}
 {% load humanize i18n static %}
 {% comment %}
-  Copyright (C) 2018 Gitcoin Core
+  Copyright (C) 2020 Gitcoin Core
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published
@@ -93,8 +93,8 @@
   }
 </script>
 
-<script type="text/javascript" src="{% static "v2/js/dataviz/sequences.js" %}"></script>
-<script type="text/javascript">
+<script src="{% static "v2/js/dataviz/sequences.js" %}"></script>
+<script>
   // Hack to make this example display correctly in an iframe on bl.ocks.org
   d3.select(self.frameElement).style("height", "700px");
 </script>
